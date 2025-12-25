@@ -17,7 +17,7 @@
                                 <x-filament::icon icon="heroicon-o-map-pin"
                                     class="h-4 w-4 text-gray-500 dark:text-gray-400" />
                                 <span
-                                    class="text-sm text-gray-500 dark:text-gray-400">{{ __('weather-widget::weather.cities.' . $city) }}</span>
+                                    class="text-sm text-gray-500 dark:text-gray-400">{{ ($translation = __($key = 'weather-widget::weather.cities.' . $city)) === $key ? $city : $translation }}</span>
                             </div>
                         </div>
                     </div>
@@ -55,14 +55,14 @@
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-thermometer-colder"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">Min: {{ $temp_min }}{{ $temp_symbol }}</span>
+                            <span class="text-sm font-semibold">{{ __('Min temp') }}: {{ $temp_min }}{{ $temp_symbol }}</span>
                         </div>
 
                         {{-- Max Temp --}}
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-thermometer-warmer"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">Max: {{ $temp_max }}{{ $temp_symbol }}</span>
+                            <span class="text-sm font-semibold">{{ __('Max temp') }}: {{ $temp_max }}{{ $temp_symbol }}</span>
                         </div>
 
                         {{-- Feels Like --}}

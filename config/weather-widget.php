@@ -44,4 +44,11 @@ return [
      * Options: 'static', 'animated' (only for fill/line icons)
      */
     'icon_variant' => 'animated',
+
+    /**
+     * Language for weather data.
+     * If not specified, then `app()->getLocale()` will be used.
+     * Full list of supported languages here: https://openweathermap.org/forecast5#multi
+     */
+    'locale' => null,
 ];

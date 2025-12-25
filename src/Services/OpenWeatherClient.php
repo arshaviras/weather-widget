@@ -23,6 +23,7 @@ class OpenWeatherClient
                 'q' => $city,
                 'units' => $units,
                 'appid' => $apiKey,
+                'lang' => config('weather-widget.locale') ?: app()->getLocale(),
             ]);
             if (!$response->successful()) {
                 return null;
