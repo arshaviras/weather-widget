@@ -2,18 +2,51 @@
 
 namespace Arshaviras\WeatherWidget\Widgets;
 
+use Filament\Forms\Components\Select;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Schemas\Schema;
 use Filament\Widgets\Widget;
+use Filament\Support\Icons\Heroicon;
 use Arshaviras\WeatherWidget\Services\OpenWeatherClient;
 
-class WeatherWidget extends Widget
+class WeatherWidget extends Widget implements HasForms
 {
+    use InteractsWithForms;
+
     public string $view = 'weather-widget::widget';
 
     protected int | string | array $columnSpan = 'full';
 
+    public array $data = [];
+
+    public function mount(): void
+    {
+        $this->data = [
+            'city' => session('weather-widget.city', config('weather-widget.city')),
+        ];
+    }
+
+    public function form(Schema $form): Schema
+    {
+        return $form
+            ->schema([
+                Select::make('city')
+                    ->options(__('weather-widget::weather.cities'))
+                    ->prefixIcon(Heroicon::OutlinedMapPin)
+                    ->selectablePlaceholder(false)
+                    ->searchable()
+                    ->hiddenLabel()
+                    ->live()
+                    ->extraAttributes(['style' => 'min-width:200px'])
+                    ->afterStateUpdated(fn ($state) => session(['weather-widget.city' => $state])),
+            ])
+            ->statePath('data');
+    }
+
     protected function getViewData(): array
     {
-        $city = config('weather-widget.city');
+        $city = $this->data['city'] ?? config('weather-widget.city');
         $units = config('weather-widget.units', 'metric');
         $apiKey = config('weather-widget.api_key');
         $refreshMinutes = (int) config('weather-widget.refresh_minutes', 30);
@@ -99,7 +132,6 @@ class WeatherWidget extends Widget
         $allItems = $allItems->take(10);
 
         return [
-            'city' => $current->city,
             'temperature' => round($current->temperature),
             'temp_symbol' => $current->unitEnum->tempSymbol(),
             'condition' => $useApiDescription
@@ -113,9 +145,9 @@ class WeatherWidget extends Widget
             'temp_min' => round($current->raw['main']['temp_min'] ?? 0),
             'temp_max' => round($current->raw['main']['temp_max'] ?? 0),
             'feels_like' => round($current->raw['main']['feels_like'] ?? 0),
-            'visibility' => $current->raw['visibility'] ?? null, // meters
-            'clouds' => $current->raw['clouds']['all'] ?? null, // percent
-            'rain' => $current->raw['rain']['1h'] ?? 0, // mm last hour
+            'visibility' => $current->raw['visibility'] ?? null,
+            'clouds' => $current->raw['clouds']['all'] ?? null,
+            'rain' => $current->raw['rain']['1h'] ?? 0,
             'pollInterval' => $refreshMinutes * 60 . 's',
             'current_icon' => $current->conditionEnum
                 ? 'weather-' . ($isDay

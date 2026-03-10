@@ -13,11 +13,10 @@
                         <div class="flex flex-col justify-center">
                             <span class="text-3xl font-bold">{{ $temperature }}{{ $temp_symbol }}</span>
                             <span class="text-base font-medium mt-1">{{ $condition }}</span>
-                            <div class="flex items-center gap-1 mt-1">
-                                <x-filament::icon icon="heroicon-o-map-pin"
-                                    class="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                                <span
-                                    class="text-sm text-gray-500 dark:text-gray-400">{{ ($translation = __($key = 'weather-widget::weather.cities.' . $city)) === $key ? $city : $translation }}</span>
+                            <div class="flex items-center gap-1 mt-2">
+                                <div class="min-w-40">
+                                    {{ $this->form }}
+                                </div>
                             </div>
                         </div>
                     </div>
