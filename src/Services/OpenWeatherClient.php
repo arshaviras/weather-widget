@@ -9,6 +9,29 @@ use Arshaviras\WeatherWidget\DTO\WeatherForecastResource;
 
 class OpenWeatherClient
 {
+    private const SUPPORTED_LANGS = [
+        'af', 'al', 'ar', 'az', 'bg', 'ca', 'cz', 'da', 'de', 'el', 'en',
+        'eu', 'fa', 'fi', 'fr', 'gl', 'he', 'hi', 'hr', 'hu', 'id', 'it',
+        'ja', 'kr', 'la', 'lt', 'mk', 'nl', 'no', 'pl', 'pt', 'pt_br', 'ro',
+        'ru', 'se', 'sk', 'sl', 'sp', 'sr', 'sv', 'th', 'tr', 'ua', 'uk',
+        'vi', 'zh_cn', 'zh_tw', 'zu',
+    ];
+
+    public static function supportsLocale(string $locale): bool
+    {
+        $normalised = strtolower(str_replace('-', '_', $locale));
+        return in_array($normalised, self::SUPPORTED_LANGS, true);
+    }
+
+    private function resolveLanguage(): string
+    {
+        $locale = config('weather-widget.locale') ?: app()->getLocale();
+        // Normalise e.g. "pt-BR" → "pt_br", "zh-CN" → "zh_cn"
+        $normalised = strtolower(str_replace('-', '_', $locale));
+
+        return in_array($normalised, self::SUPPORTED_LANGS, true) ? $normalised : 'en';
+    }
+
     private function getWeatherData(
         string $endpoint,
         string $city,
@@ -16,14 +39,15 @@ class OpenWeatherClient
         string $units,
         int $cacheDuration
     ): array|null {
-        $cacheKey = "weather-{$endpoint}-" . md5($city . $units . $apiKey);
+        $lang = $this->resolveLanguage();
+        $cacheKey = "weather-{$endpoint}-" . md5($city . $units . $apiKey . $lang);
 
-        return Cache::remember($cacheKey, $cacheDuration, function () use ($endpoint, $city, $apiKey, $units) {
+        return Cache::remember($cacheKey, $cacheDuration, function () use ($endpoint, $city, $apiKey, $units, $lang) {
             $response = Http::get("https://api.openweathermap.org/data/2.5/{$endpoint}", [
                 'q' => $city,
                 'units' => $units,
                 'appid' => $apiKey,
-                'lang' => config('weather-widget.locale') ?: app()->getLocale(),
+                'lang' => $lang,
             ]);
             if (!$response->successful()) {
                 return null;

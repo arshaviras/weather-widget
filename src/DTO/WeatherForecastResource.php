@@ -3,6 +3,7 @@
 namespace Arshaviras\WeatherWidget\DTO;
 
 use Arshaviras\WeatherWidget\Enums\WeatherCondition;
+use Illuminate\Support\Str;
 
 class WeatherForecastResource
 {
@@ -10,6 +11,7 @@ class WeatherForecastResource
         public string $datetime,
         public float $temperature,
         public WeatherCondition|null $conditionEnum,
+        public string $description,
         public string $iconCode,
         public array $raw = []
     ) {}
@@ -23,6 +25,7 @@ class WeatherForecastResource
             datetime: $data['dt_txt'] ?? '',
             temperature: $data['main']['temp'] ?? 0.0,
             conditionEnum: $conditionEnum,
+            description: Str::ucfirst($data['weather'][0]['description'] ?? ''),
             iconCode: $data['weather'][0]['icon'] ?? '',
             raw: $data,
         );

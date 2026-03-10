@@ -17,6 +17,8 @@ class WeatherWidget extends Widget
         $units = config('weather-widget.units', 'metric');
         $apiKey = config('weather-widget.api_key');
         $refreshMinutes = (int) config('weather-widget.refresh_minutes', 30);
+        $locale = config('weather-widget.locale') ?: app()->getLocale();
+        $useApiDescription = OpenWeatherClient::supportsLocale($locale);
 
         $client = app(OpenWeatherClient::class);
 
@@ -35,7 +37,7 @@ class WeatherWidget extends Widget
 
         $forecastItems = collect($forecast)
             ->take(10)
-            ->map(function ($item) use ($timezoneOffset) {
+            ->map(function ($item) use ($timezoneOffset, $useApiDescription) {
                 $dt = \Carbon\Carbon::parse($item->datetime, 'UTC')->addSeconds($timezoneOffset);
                 $isDay = str_ends_with($item->iconCode, 'd');
                 return [
@@ -46,7 +48,9 @@ class WeatherWidget extends Widget
                             ? $item->conditionEnum->dayIcon()
                             : $item->conditionEnum->nightIcon())
                         : 'weather-not-available',
-                    'forecast_condition' => $item->conditionEnum?->label() ?? 'N/A',
+                    'forecast_condition' => $useApiDescription
+                        ? ($item->description ?: 'N/A')
+                        : ($item->conditionEnum?->label() ?? 'N/A'),
                     'temp' => round($item->temperature),
                 ];
             })
@@ -98,7 +102,9 @@ class WeatherWidget extends Widget
             'city' => $current->city,
             'temperature' => round($current->temperature),
             'temp_symbol' => $current->unitEnum->tempSymbol(),
-            'condition' => $current->conditionEnum?->label() ?? 'N/A',
+            'condition' => $useApiDescription
+                ? ($current->description ?: 'N/A')
+                : ($current->conditionEnum?->label() ?? 'N/A'),
             'wind_speed' => $current->wind_speed,
             'wind_deg' => $current->wind_deg,
             'wind_unit' => $current->unitEnum->windUnit(),
