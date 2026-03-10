@@ -4,6 +4,15 @@ return [
     'labels' => [
         'sunrise' => 'Sunrise',
         'sunset' => 'Sunset',
+        'wind' => 'Wind',
+        'humidity' => 'Humidity',
+        'pressure' => 'Pressure',
+        'feels_like' => 'Feels Like',
+        'visibility' => 'Visibility',
+        'clouds' => 'Clouds',
+        'rain' => 'Rain',
+        'min_temp' => 'Min Temp',
+        'max_temp' => 'Max Temp',
         'daily_forecast' => '5 Day Forecast',
     ],
     'conditions' => [

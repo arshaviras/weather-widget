@@ -31,7 +31,7 @@
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-wind" class="h-8 w-8 text-gray-500 dark:text-gray-400" />
                             <span class="text-sm font-semibold">
-                                {{ __('Wind') }}: {{ $wind_speed }} {{ $wind_unit }}
+                                {{ __('weather-widget::weather.labels.wind') }}: {{ $wind_speed }} {{ $wind_unit }}
                             </span>
                             <x-filament::icon icon="heroicon-o-arrow-up"
                                 class="h-4 w-4 text-gray-500 dark:text-gray-400" :style="'transform: rotate(' . $wind_deg . 'deg);'" />
@@ -41,28 +41,28 @@
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-humidity"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">{{ __('Humidity') }}: {{ $humidity }}% RH</span>
+                            <span class="text-sm font-semibold">{{ __('weather-widget::weather.labels.humidity') }}: {{ $humidity }}% RH</span>
                         </div>
 
                         {{-- Pressure --}}
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-barometer"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">{{ __('Pressure') }}: {{ $pressure }} hPa</span>
+                            <span class="text-sm font-semibold">{{ __('weather-widget::weather.labels.pressure') }}: {{ $pressure }} hPa</span>
                         </div>
 
                         {{-- Min Temp --}}
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-thermometer-colder"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">{{ __('Min temp') }}: {{ $temp_min }}{{ $temp_symbol }}</span>
+                            <span class="text-sm font-semibold">{{ __('weather-widget::weather.labels.min_temp') }}: {{ $temp_min }}{{ $temp_symbol }}</span>
                         </div>
 
                         {{-- Max Temp --}}
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-thermometer-warmer"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">{{ __('Max temp') }}: {{ $temp_max }}{{ $temp_symbol }}</span>
+                            <span class="text-sm font-semibold">{{ __('weather-widget::weather.labels.max_temp') }}: {{ $temp_max }}{{ $temp_symbol }}</span>
                         </div>
 
                         {{-- Feels Like --}}
@@ -70,7 +70,7 @@
                             <x-filament::icon icon="weather-thermometer"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
                             <span class="text-sm font-semibold">
-                                {{ __('Feels like') }}: {{ $feels_like }}{{ $temp_symbol }}
+                                {{ __('weather-widget::weather.labels.feels_like') }}: {{ $feels_like }}{{ $temp_symbol }}
                             </span>
                         </div>
 
@@ -78,21 +78,21 @@
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-mist" class="h-8 w-8 text-gray-500 dark:text-gray-400" />
                             <span class="text-sm font-semibold">
-                                {{ __('Visibility') }}: {{ $visibility ? round($visibility / 1000, 1) . ' km' : '—' }}
+                                {{ __('weather-widget::weather.labels.visibility') }}: {{ $visibility ? round($visibility / 1000, 1) . ' km' : '—' }}
                             </span>
                         </div>
 
                         {{-- Clouds --}}
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-cloudy" class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">{{ __('Clouds') }}: {{ $clouds ?? '—' }}%</span>
+                            <span class="text-sm font-semibold">{{ __('weather-widget::weather.labels.clouds') }}: {{ $clouds ?? '—' }}%</span>
                         </div>
 
                         {{-- Rain --}}
                         <div class="flex items-center gap-2">
                             <x-filament::icon icon="weather-umbrella"
                                 class="h-8 w-8 text-gray-500 dark:text-gray-400" />
-                            <span class="text-sm font-semibold">{{ __('Rain') }}: {{ $rain . ' mm/h' }}</span>
+                            <span class="text-sm font-semibold">{{ __('weather-widget::weather.labels.rain') }}: {{ $rain . ' mm/h' }}</span>
                         </div>
                     </div>
 
@@ -111,9 +111,9 @@
                             <span class="font-semibold text-lg text-gray-500 dark:text-gray-400">
                                 {{-- Show Sunrise/Sunset instead of temperature if applicable --}}
                                 @if (!empty($hour['is_sunrise']))
-                                    {{ __('Sunrise') }}
+                                    {{ __('weather-widget::weather.labels.sunrise') }}
                                 @elseif (!empty($hour['is_sunset']))
-                                    {{ __('Sunset') }}
+                                    {{ __('weather-widget::weather.labels.sunset') }}
                                 @else
                                     {{ $hour['temp'] }}{{ $temp_symbol }}
                                 @endif

@@ -4,6 +4,15 @@ return [
     'labels' => [
         'sunrise' => 'Ανατολή',
         'sunset' => 'Δύση',
+        'wind' => 'Άνεμος',
+        'humidity' => 'Υγρασία',
+        'pressure' => 'Πίεση',
+        'feels_like' => 'Αίσθηση',
+        'visibility' => 'Ορατότητα',
+        'clouds' => 'Σύννεφα',
+        'rain' => 'Βροχή',
+        'min_temp' => 'Ελάχ. θερμ.',
+        'max_temp' => 'Μέγ. θερμ.',
         'daily_forecast' => 'Πρόγνωση 5 Ημερών',
     ],
     'conditions' => [
