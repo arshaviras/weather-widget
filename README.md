@@ -19,7 +19,7 @@ Powered by the OpenWeatherMap API, fully translatable, and supports °C/°F, ani
 ## Requirements
 
 - PHP 8.2 or higher
-- Laravel 11.x or 12.x
+- Laravel 11.x, 12.x or 13.x
 - Filament 4.x or 5.x
 
 ## Installation
