@@ -2,6 +2,7 @@
 
 namespace Arshaviras\WeatherWidget\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Arshaviras\WeatherWidget\DTO\WeatherCurrentResource;
@@ -40,20 +41,53 @@ class OpenWeatherClient
         int $cacheDuration
     ): array|null {
         $lang = $this->resolveLanguage();
-        $cacheKey = "weather-{$endpoint}-" . md5($city . $units . $apiKey . $lang);
+        $hash = md5($city . $units . $apiKey . $lang);
+        $cacheKey = "weather-{$endpoint}-{$hash}";
+        // Shared by both endpoints: when one of them fails, the other one is not asked either.
+        $failureKey = "weather-failed-{$hash}";
 
-        return Cache::remember($cacheKey, $cacheDuration, function () use ($endpoint, $city, $apiKey, $units, $lang) {
-            $response = Http::get("https://api.openweathermap.org/data/2.5/{$endpoint}", [
-                'q' => $city,
-                'units' => $units,
-                'appid' => $apiKey,
-                'lang' => $lang,
-            ]);
-            if (!$response->successful()) {
-                return null;
-            }
-            return $response->json();
-        });
+        $data = Cache::get($cacheKey);
+
+        if ($data !== null || Cache::has($failureKey)) {
+            return $data;
+        }
+
+        $data = $this->fetch($endpoint, [
+            'q' => $city,
+            'units' => $units,
+            'appid' => $apiKey,
+            'lang' => $lang,
+        ]);
+
+        if ($data === null) {
+            Cache::put($failureKey, true, (int) config('weather-widget.failure_cache_seconds', 60));
+
+            return null;
+        }
+
+        Cache::put($cacheKey, $data, $cacheDuration);
+
+        return $data;
+    }
+
+    /**
+     * Returns null when OpenWeatherMap cannot be reached in time or answers with an error.
+     */
+    private function fetch(string $endpoint, array $query): array|null
+    {
+        try {
+            $response = Http::connectTimeout((int) config('weather-widget.connect_timeout', 3))
+                ->timeout((int) config('weather-widget.timeout', 5))
+                ->get("https://api.openweathermap.org/data/2.5/{$endpoint}", $query);
+        } catch (ConnectionException) {
+            return null;
+        }
+
+        if (!$response->successful()) {
+            return null;
+        }
+
+        return $response->json();
     }
 
     public function current(string $city, string $units, string $apiKey, int $ttl = 300): ?WeatherCurrentResource
