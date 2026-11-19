@@ -110,6 +110,8 @@ class WeatherWidget extends Widget implements HasForms
             ->map(fn (WeatherForecastResource $item) => [
                 'time' => $localTime($item->timestamp)->format('H:i'),
                 'dt_unix' => $item->timestamp,
+                // Forecast slots cover 3 hours; keep the one in progress until it ends.
+                'visible_until' => $item->timestamp + 3 * 3600,
                 'forecast_icon' => $this->iconFor($item->conditionEnum, $item->iconCode),
                 'forecast_condition' => $this->conditionLabel($item->conditionEnum, $item->description, $useApiDescription),
                 'temp' => round($item->temperature),
@@ -130,7 +132,7 @@ class WeatherWidget extends Widget implements HasForms
 
         $hourlyForecast = $forecastItems
             ->concat($sunEvents)
-            ->filter(fn (array $item) => $item['dt_unix'] >= $now)
+            ->filter(fn (array $item) => ($item['visible_until'] ?? $item['dt_unix']) >= $now)
             ->sortBy('dt_unix')
             ->values()
             ->take(10);
