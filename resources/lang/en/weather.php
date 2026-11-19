@@ -17,6 +17,7 @@ return [
     ],
     'errors' => [
         'unavailable' => 'Weather data is not available right now. If this continues, check the API key and the city.',
+        'missing_api_key' => 'OpenWeatherMap API key is not set. Add OPENWEATHER_API_KEY to your .env file.',
     ],
     'conditions' => [
         'thunderstorm_with_light_rain' => 'Thunderstorm with light rain',

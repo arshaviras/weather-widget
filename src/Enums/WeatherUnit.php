@@ -13,7 +13,7 @@ enum WeatherUnit: string
         return match ($this) {
             self::Metric => '°C',
             self::Imperial => '°F',
-            self::Standard => '°K',
+            self::Standard => 'K',
         };
     }
 
@@ -21,7 +21,7 @@ enum WeatherUnit: string
     {
         return match ($this) {
             self::Metric => 'm/s',
-            self::Imperial => 'MPH',
+            self::Imperial => 'mph',
             self::Standard => 'm/s',
         };
     }

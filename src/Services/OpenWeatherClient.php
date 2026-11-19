@@ -14,23 +14,53 @@ class OpenWeatherClient
         'af', 'al', 'ar', 'az', 'bg', 'ca', 'cz', 'da', 'de', 'el', 'en',
         'eu', 'fa', 'fi', 'fr', 'gl', 'he', 'hi', 'hr', 'hu', 'id', 'it',
         'ja', 'kr', 'la', 'lt', 'mk', 'nl', 'no', 'pl', 'pt', 'pt_br', 'ro',
-        'ru', 'se', 'sk', 'sl', 'sp', 'sr', 'sv', 'th', 'tr', 'ua', 'uk',
+        'ru', 'se', 'sk', 'sl', 'sp', 'es', 'sr', 'sv', 'th', 'tr', 'ua', 'uk',
         'vi', 'zh_cn', 'zh_tw', 'zu',
     ];
 
-    public static function supportsLocale(string $locale): bool
+    /**
+     * Laravel / ISO locale codes that OpenWeatherMap knows under a different code.
+     */
+    private const LOCALE_ALIASES = [
+        'cs' => 'cz',
+        'ko' => 'kr',
+        'sq' => 'al',
+        'nb' => 'no',
+        'nn' => 'no',
+        'zh' => 'zh_cn',
+        'zh_hk' => 'zh_tw',
+    ];
+
+    /**
+     * Maps an app locale to an OpenWeatherMap language code, or null when it is not supported.
+     * Tries the full locale first ("pt-BR" → "pt_br"), then the base language ("de_AT" → "de").
+     */
+    public static function languageFor(string $locale): ?string
     {
         $normalised = strtolower(str_replace('-', '_', $locale));
-        return in_array($normalised, self::SUPPORTED_LANGS, true);
+        $base = explode('_', $normalised)[0];
+
+        foreach ([$normalised, $base] as $candidate) {
+            $candidate = self::LOCALE_ALIASES[$candidate] ?? $candidate;
+
+            if (in_array($candidate, self::SUPPORTED_LANGS, true)) {
+                return $candidate;
+            }
+        }
+
+        return null;
+    }
+
+    public static function supportsLocale(string $locale): bool
+    {
+        return self::languageFor($locale) !== null;
     }
 
     private function resolveLanguage(): string
     {
         $locale = config('weather-widget.locale') ?: app()->getLocale();
-        // Normalise e.g. "pt-BR" → "pt_br", "zh-CN" → "zh_cn"
-        $normalised = strtolower(str_replace('-', '_', $locale));
 
-        return in_array($normalised, self::SUPPORTED_LANGS, true) ? $normalised : 'en';
+        return self::languageFor($locale) ?? 'en';
     }
 
     private function getWeatherData(

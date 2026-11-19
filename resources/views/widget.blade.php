@@ -1,8 +1,13 @@
 <x-filament::widget>
     <x-filament::card>
         @if (isset($error))
-            <div>
-                {{ $error }}
+            {{-- Keep the city selector and polling so a bad city or an outage is not a dead end --}}
+            <div @if ($pollInterval) wire:poll.{{ $pollInterval }} @endif
+                class="flex flex-wrap items-center justify-between gap-4">
+                <span>{{ $error }}</span>
+                <div>
+                    {{ $this->form }}
+                </div>
             </div>
         @else
             <div wire:poll.{{ $pollInterval }}>

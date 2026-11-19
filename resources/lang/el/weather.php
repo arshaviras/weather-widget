@@ -17,6 +17,7 @@ return [
     ],
     'errors' => [
         'unavailable' => 'Τα δεδομένα καιρού δεν είναι διαθέσιμα αυτή τη στιγμή. Αν συνεχιστεί, ελέγξτε το κλειδί API και την πόλη.',
+        'missing_api_key' => 'Δεν έχει οριστεί κλειδί API για το OpenWeatherMap. Προσθέστε το OPENWEATHER_API_KEY στο αρχείο .env.',
     ],
     'conditions' => [
         'thunderstorm_with_light_rain' => 'Καταιγίδα με ελαφριά βροχή',

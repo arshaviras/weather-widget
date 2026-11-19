@@ -13,7 +13,8 @@ class WeatherForecastResource
         public WeatherCondition|null $conditionEnum,
         public string $description,
         public string $iconCode,
-        public array $raw = []
+        public array $raw = [],
+        public int $timestamp = 0,
     ) {}
 
     public static function fromApi(array $data): self
@@ -28,6 +29,8 @@ class WeatherForecastResource
             description: Str::ucfirst($data['weather'][0]['description'] ?? ''),
             iconCode: $data['weather'][0]['icon'] ?? '',
             raw: $data,
+            // `dt` is the real UTC unix timestamp; `dt_txt` is the same moment as a UTC string.
+            timestamp: (int) ($data['dt'] ?? (isset($data['dt_txt']) ? strtotime($data['dt_txt'] . ' UTC') : 0)),
         );
     }
 }

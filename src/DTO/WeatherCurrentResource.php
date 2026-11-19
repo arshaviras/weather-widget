@@ -29,7 +29,7 @@ class WeatherCurrentResource
     {
         $weatherCode = $data['weather'][0]['id'] ?? null;
         $conditionEnum = $weatherCode ? WeatherCondition::fromCode($weatherCode) : null;
-        $unitEnum = WeatherUnit::from($unit);
+        $unitEnum = WeatherUnit::tryFrom($unit) ?? WeatherUnit::Metric;
 
         return new self(
             city: $data['name'] ?? '',

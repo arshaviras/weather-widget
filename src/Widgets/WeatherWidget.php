@@ -2,13 +2,17 @@
 
 namespace Arshaviras\WeatherWidget\Widgets;
 
+use Arshaviras\WeatherWidget\DTO\WeatherForecastResource;
+use Arshaviras\WeatherWidget\Enums\WeatherCondition;
+use Arshaviras\WeatherWidget\Enums\WeatherUnit;
+use Arshaviras\WeatherWidget\Services\OpenWeatherClient;
+use Carbon\Carbon;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
-use Filament\Widgets\Widget;
 use Filament\Support\Icons\Heroicon;
-use Arshaviras\WeatherWidget\Services\OpenWeatherClient;
+use Filament\Widgets\Widget;
 
 class WeatherWidget extends Widget implements HasForms
 {
@@ -23,7 +27,7 @@ class WeatherWidget extends Widget implements HasForms
     public function mount(): void
     {
         $this->data = [
-            'city' => session('weather-widget.city', config('weather-widget.city')),
+            'city' => $this->resolveCity(session('weather-widget.city')),
         ];
     }
 
@@ -39,122 +43,142 @@ class WeatherWidget extends Widget implements HasForms
                     ->hiddenLabel()
                     ->live()
                     ->extraAttributes(['style' => 'min-width:200px'])
-                    ->afterStateUpdated(fn ($state) => session(['weather-widget.city' => $state])),
+                    ->afterStateUpdated(function ($state): void {
+                        $city = $this->resolveCity($state);
+                        $this->data['city'] = $city;
+                        session(['weather-widget.city' => $city]);
+                    }),
             ])
             ->statePath('data');
     }
 
+    /**
+     * Only cities from the list (or the configured default) are accepted.
+     * `$data` is a public Livewire property, so the browser can send any value.
+     */
+    protected function resolveCity(mixed $city): string
+    {
+        $default = (string) config('weather-widget.city');
+
+        if (! is_string($city) || $city === '' || $city === $default) {
+            return $default;
+        }
+
+        $cities = __('weather-widget::weather.cities');
+
+        return is_array($cities) && array_key_exists($city, $cities) ? $city : $default;
+    }
+
     protected function getViewData(): array
     {
-        $city = $this->data['city'] ?? config('weather-widget.city');
-        $units = config('weather-widget.units', 'metric');
-        $apiKey = config('weather-widget.api_key');
-        $refreshMinutes = (int) config('weather-widget.refresh_minutes', 30);
+        $city = $this->resolveCity($this->data['city'] ?? null);
+        $units = (WeatherUnit::tryFrom((string) config('weather-widget.units', 'metric')) ?? WeatherUnit::Metric)->value;
+        $apiKey = (string) config('weather-widget.api_key');
+        $refreshSeconds = max(60, (int) config('weather-widget.refresh_minutes', 30) * 60);
         $locale = config('weather-widget.locale') ?: app()->getLocale();
         $useApiDescription = OpenWeatherClient::supportsLocale($locale);
 
+        if ($apiKey === '') {
+            return [
+                'error' => __('weather-widget::weather.errors.missing_api_key'),
+                'pollInterval' => null,
+            ];
+        }
+
         $client = app(OpenWeatherClient::class);
 
-        $current = $client->current($city, $units, $apiKey, $refreshMinutes * 60);
-        $forecast = $client->forecast($city, $units, $apiKey, $refreshMinutes * 60);
+        $current = $client->current($city, $units, $apiKey, $refreshSeconds);
 
-        if (!$current) {
+        if (! $current) {
+            // Poll sooner than usual so the widget recovers once the API answers again.
+            $retrySeconds = min($refreshSeconds, max(60, (int) config('weather-widget.failure_cache_seconds', 60)));
+
             return [
                 'error' => __('weather-widget::weather.errors.unavailable'),
+                'pollInterval' => $retrySeconds . 's',
             ];
         }
 
-        $isDay = str_ends_with($current->iconCode, 'd');
+        $forecast = $client->forecast($city, $units, $apiKey, $refreshSeconds);
 
-        $timezoneOffset = $current->timezone ?? 0;
+        // Keep real UTC timestamps for sorting/filtering; only shift to the city's offset for display.
+        $offsetMinutes = intdiv($current->timezone, 60);
+        $localTime = fn (int $timestamp): Carbon => Carbon::createFromTimestamp($timestamp)->utcOffset($offsetMinutes);
+        $now = time();
 
         $forecastItems = collect($forecast)
-            ->take(10)
-            ->map(function ($item) use ($timezoneOffset, $useApiDescription) {
-                $dt = \Carbon\Carbon::parse($item->datetime, 'UTC')->addSeconds($timezoneOffset);
-                $isDay = str_ends_with($item->iconCode, 'd');
-                return [
-                    'time' => $dt->format('H:i'),
-                    'dt_unix' => $dt->timestamp,
-                    'forecast_icon' => $item->conditionEnum
-                        ? 'weather-' . ($isDay
-                            ? $item->conditionEnum->dayIcon()
-                            : $item->conditionEnum->nightIcon())
-                        : 'weather-not-available',
-                    'forecast_condition' => $useApiDescription
-                        ? ($item->description ?: 'N/A')
-                        : ($item->conditionEnum?->label() ?? 'N/A'),
-                    'temp' => round($item->temperature),
-                ];
-            })
+            ->map(fn (WeatherForecastResource $item) => [
+                'time' => $localTime($item->timestamp)->format('H:i'),
+                'dt_unix' => $item->timestamp,
+                'forecast_icon' => $this->iconFor($item->conditionEnum, $item->iconCode),
+                'forecast_condition' => $this->conditionLabel($item->conditionEnum, $item->description, $useApiDescription),
+                'temp' => round($item->temperature),
+            ]);
+
+        $sunEvents = collect(['sunrise' => $current->sunrise, 'sunset' => $current->sunset])
+            ->filter()
+            ->map(fn (int $timestamp, string $event) => [
+                'time' => $localTime($timestamp)->format('H:i'),
+                'dt_unix' => $timestamp,
+                'forecast_icon' => "weather-{$event}",
+                'forecast_condition' => __("weather-widget::weather.labels.{$event}"),
+                'temp' => null,
+                'is_sunrise' => $event === 'sunrise',
+                'is_sunset' => $event === 'sunset',
+            ])
             ->values();
 
-        $sunrise = $current->sunrise ? \Carbon\Carbon::createFromTimestamp($current->sunrise + $timezoneOffset) : null;
-        $sunset = $current->sunset ? \Carbon\Carbon::createFromTimestamp($current->sunset + $timezoneOffset) : null;
-
-        $sunriseItem = null;
-        $sunsetItem = null;
-
-        if ($sunrise) {
-            $sunriseItem = [
-                'time' => $sunrise->format('H:i'),
-                'dt_unix' => $sunrise->timestamp,
-                'forecast_icon' => 'weather-sunrise',
-                'forecast_condition' => __('weather-widget::weather.labels.sunrise'),
-                'temp' => null,
-                'is_sunrise' => true,
-                'is_sunset' => false,
-            ];
-        }
-        if ($sunset) {
-            $sunsetItem = [
-                'time' => $sunset->format('H:i'),
-                'dt_unix' => $sunset->timestamp,
-                'forecast_icon' => 'weather-sunset',
-                'forecast_condition' => __('weather-widget::weather.labels.sunset'),
-                'temp' => null,
-                'is_sunrise' => false,
-                'is_sunset' => true,
-            ];
-        }
-
-        $allItems = $forecastItems;
-        if ($sunriseItem) $allItems = $allItems->push($sunriseItem);
-        if ($sunsetItem) $allItems = $allItems->push($sunsetItem);
-
-        $allItems = $allItems
+        $hourlyForecast = $forecastItems
+            ->concat($sunEvents)
+            ->filter(fn (array $item) => $item['dt_unix'] >= $now)
             ->sortBy('dt_unix')
-            ->values();
+            ->values()
+            ->take(10);
 
-        $now = now()->timestamp;
-        $allItems = $allItems->filter(fn($item) => $item['dt_unix'] >= $now)->values();
-
-        $allItems = $allItems->take(10);
+        // OpenWeatherMap's current temp_min/temp_max is the spread across the city right now,
+        // so combine it with today's forecast slots to get a closer "today" low/high.
+        $today = $localTime($now)->toDateString();
+        $todayTemps = collect($forecast)
+            ->filter(fn (WeatherForecastResource $item) => $localTime($item->timestamp)->toDateString() === $today)
+            ->pluck('temperature')
+            ->push($current->raw['main']['temp_min'] ?? $current->temperature)
+            ->push($current->raw['main']['temp_max'] ?? $current->temperature);
 
         return [
             'temperature' => round($current->temperature),
             'temp_symbol' => $current->unitEnum->tempSymbol(),
-            'condition' => $useApiDescription
-                ? ($current->description ?: 'N/A')
-                : ($current->conditionEnum?->label() ?? 'N/A'),
+            'condition' => $this->conditionLabel($current->conditionEnum, $current->description, $useApiDescription),
             'wind_speed' => $current->wind_speed,
-            'wind_deg' => $current->wind_deg,
+            // The API gives the direction the wind comes from; the arrow points where it blows to.
+            'wind_deg' => ($current->wind_deg + 180) % 360,
             'wind_unit' => $current->unitEnum->windUnit(),
             'humidity' => $current->humidity,
             'pressure' => $current->pressure,
-            'temp_min' => round($current->raw['main']['temp_min'] ?? 0),
-            'temp_max' => round($current->raw['main']['temp_max'] ?? 0),
-            'feels_like' => round($current->raw['main']['feels_like'] ?? 0),
+            'temp_min' => round($todayTemps->min()),
+            'temp_max' => round($todayTemps->max()),
+            'feels_like' => round($current->raw['main']['feels_like'] ?? $current->temperature),
             'visibility' => $current->raw['visibility'] ?? null,
             'clouds' => $current->raw['clouds']['all'] ?? null,
             'rain' => $current->raw['rain']['1h'] ?? 0,
-            'pollInterval' => $refreshMinutes * 60 . 's',
-            'current_icon' => $current->conditionEnum
-                ? 'weather-' . ($isDay
-                    ? $current->conditionEnum->dayIcon()
-                    : $current->conditionEnum->nightIcon())
-                : 'weather-not-available',
-            'hourlyForecast' => $allItems,
+            'pollInterval' => $refreshSeconds . 's',
+            'current_icon' => $this->iconFor($current->conditionEnum, $current->iconCode),
+            'hourlyForecast' => $hourlyForecast,
         ];
+    }
+
+    protected function iconFor(?WeatherCondition $condition, string $iconCode): string
+    {
+        if (! $condition) {
+            return 'weather-not-available';
+        }
+
+        return 'weather-' . (str_ends_with($iconCode, 'd') ? $condition->dayIcon() : $condition->nightIcon());
+    }
+
+    protected function conditionLabel(?WeatherCondition $condition, string $description, bool $useApiDescription): string
+    {
+        return $useApiDescription
+            ? ($description ?: 'N/A')
+            : ($condition?->label() ?? 'N/A');
     }
 }

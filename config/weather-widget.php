@@ -19,7 +19,7 @@ return [
     /**
      * Units for temperature and other measurements
      * Options: 'metric', 'imperial', 'standard'
-     * 'metric' - Celsius (°C), 'imperial' - Fahrenheit (°F), 'standard' - Kelvin (°K)
+     * 'metric' - Celsius (°C), 'imperial' - Fahrenheit (°F), 'standard' - Kelvin (K)
      * Default is 'metric'
      */
     'units' => 'metric',
