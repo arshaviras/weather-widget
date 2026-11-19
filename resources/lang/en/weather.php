@@ -15,6 +15,9 @@ return [
         'max_temp' => 'Max Temp',
         'daily_forecast' => '5 Day Forecast',
     ],
+    'errors' => [
+        'unavailable' => 'Weather data is not available right now. If this continues, check the API key and the city.',
+    ],
     'conditions' => [
         'thunderstorm_with_light_rain' => 'Thunderstorm with light rain',
         'thunderstorm_with_rain' => 'Thunderstorm with rain',

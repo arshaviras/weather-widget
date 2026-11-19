@@ -60,7 +60,7 @@ class WeatherWidget extends Widget implements HasForms
 
         if (!$current) {
             return [
-                'error' => 'Failed to fetch weather data. Check API key/city.',
+                'error' => __('weather-widget::weather.errors.unavailable'),
             ];
         }
 

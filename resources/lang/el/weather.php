@@ -15,6 +15,9 @@ return [
         'max_temp' => 'Μέγ. θερμ.',
         'daily_forecast' => 'Πρόγνωση 5 Ημερών',
     ],
+    'errors' => [
+        'unavailable' => 'Τα δεδομένα καιρού δεν είναι διαθέσιμα αυτή τη στιγμή. Αν συνεχιστεί, ελέγξτε το κλειδί API και την πόλη.',
+    ],
     'conditions' => [
         'thunderstorm_with_light_rain' => 'Καταιγίδα με ελαφριά βροχή',
         'thunderstorm_with_rain' => 'Καταιγίδα με βροχή',

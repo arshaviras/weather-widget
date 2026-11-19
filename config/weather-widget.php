@@ -51,4 +51,20 @@ return [
      * Full list of supported languages here: https://openweathermap.org/forecast5#multi
      */
     'locale' => null,
+
+    /**
+     * Timeouts, in seconds, for requests to OpenWeatherMap.
+     * The widget is rendered together with the page, so the page waits for these requests.
+     * 'connect_timeout' is the time allowed to reach the service,
+     * 'timeout' is the time allowed for the whole request.
+     */
+    'connect_timeout' => 3,
+    'timeout' => 5,
+
+    /**
+     * How long, in seconds, a failed request is remembered.
+     * Until then the widget shows its "not available" message without asking again,
+     * so an outage does not slow down every page load. Set to 0 to ask every time.
+     */
+    'failure_cache_seconds' => 60,
 ];
