@@ -10,11 +10,12 @@ class WeatherForecastResource
     public function __construct(
         public string $datetime,
         public float $temperature,
-        public WeatherCondition|null $conditionEnum,
+        public ?WeatherCondition $conditionEnum,
         public string $description,
         public string $iconCode,
         public array $raw = [],
         public int $timestamp = 0,
+        public ?float $pop = null,
     ) {}
 
     public static function fromApi(array $data): self
@@ -30,7 +31,8 @@ class WeatherForecastResource
             iconCode: $data['weather'][0]['icon'] ?? '',
             raw: $data,
             // `dt` is the real UTC unix timestamp; `dt_txt` is the same moment as a UTC string.
-            timestamp: (int) ($data['dt'] ?? (isset($data['dt_txt']) ? strtotime($data['dt_txt'] . ' UTC') : 0)),
+            timestamp: (int) ($data['dt'] ?? (isset($data['dt_txt']) ? strtotime($data['dt_txt'].' UTC') : 0)),
+            pop: isset($data['pop']) ? (float) $data['pop'] : null,
         );
     }
 }

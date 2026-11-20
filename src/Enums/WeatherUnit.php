@@ -17,6 +17,11 @@ enum WeatherUnit: string
         };
     }
 
+    public function shortTempSymbol(): string
+    {
+        return $this === self::Standard ? ' K' : '°';
+    }
+
     public function windUnit(): string
     {
         return match ($this) {

@@ -9,12 +9,10 @@ return [
      */
     'api_key' => env('OPENWEATHER_API_KEY', ''),
 
-
     /**
      * Default city for weather data
      */
     'city' => 'Yerevan',
-
 
     /**
      * Units for temperature and other measurements
@@ -24,13 +22,12 @@ return [
      */
     'units' => 'metric',
 
-    
     /**
      * Refresh (Poll) interval in minutes
      * This determines how often the weather data will be refreshed.
      * This also factors into the cache duration.
      */
-    'refresh_minutes' => 100, 
+    'refresh_minutes' => 10,
 
     /**
      * Icon settings
@@ -51,6 +48,33 @@ return [
      * Full list of supported languages here: https://openweathermap.org/forecast5#multi
      */
     'locale' => null,
+
+    /**
+     * Forecast shown under the current weather.
+     * Options: 'hourly', 'daily', 'both'
+     * Users can switch it in the widget; their choice is remembered.
+     */
+    'forecast_view' => 'hourly',
+
+    /**
+     * Show the gear button that lets each user change units, refresh interval and icons.
+     * Choices are saved per user (in the cache) and override the values above.
+     * Set to false to always use the values from this file.
+     */
+    'user_settings' => true,
+
+    /**
+     * Let users change the location in the settings window: search for any place (OpenWeatherMap
+     * geocoding, included in the free plan) or use their browser's location (needs HTTPS).
+     * Set to false to always use the 'city' above.
+     */
+    'location_search' => true,
+
+    /**
+     * WeatherWidgets only: the most weather cards one user can have on the dashboard.
+     * Each card fetches its own data, so this also limits API usage.
+     */
+    'max_widgets' => 6,
 
     /**
      * Timeouts, in seconds, for requests to OpenWeatherMap.

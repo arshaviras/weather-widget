@@ -2,11 +2,12 @@
 
 namespace Arshaviras\WeatherWidget\Services;
 
-use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
 use Arshaviras\WeatherWidget\DTO\WeatherCurrentResource;
 use Arshaviras\WeatherWidget\DTO\WeatherForecastResource;
+use Arshaviras\WeatherWidget\Support\Location;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class OpenWeatherClient
 {
@@ -63,15 +64,30 @@ class OpenWeatherClient
         return self::languageFor($locale) ?? 'en';
     }
 
+    private function cacheHash(Location $location, string $units, string $apiKey): string
+    {
+        return md5(json_encode($location->query()).$units.$apiKey.$this->resolveLanguage());
+    }
+
+    public function forget(Location|string $location, string $units, string $apiKey): void
+    {
+        $location = is_string($location) ? Location::city($location) : $location;
+        $hash = $this->cacheHash($location, $units, $apiKey);
+
+        Cache::forget("weather-weather-{$hash}");
+        Cache::forget("weather-forecast-{$hash}");
+        Cache::forget("weather-failed-{$hash}");
+    }
+
     private function getWeatherData(
         string $endpoint,
-        string $city,
+        Location $location,
         string $apiKey,
         string $units,
         int $cacheDuration
-    ): array|null {
+    ): ?array {
         $lang = $this->resolveLanguage();
-        $hash = md5($city . $units . $apiKey . $lang);
+        $hash = $this->cacheHash($location, $units, $apiKey);
         $cacheKey = "weather-{$endpoint}-{$hash}";
         // Shared by both endpoints: when one of them fails, the other one is not asked either.
         $failureKey = "weather-failed-{$hash}";
@@ -82,8 +98,7 @@ class OpenWeatherClient
             return $data;
         }
 
-        $data = $this->fetch($endpoint, [
-            'q' => $city,
+        $data = $this->fetch("data/2.5/{$endpoint}", $location->query() + [
             'units' => $units,
             'appid' => $apiKey,
             'lang' => $lang,
@@ -95,6 +110,8 @@ class OpenWeatherClient
             return null;
         }
 
+        $data['_fetched_at'] = now()->getTimestamp();
+
         Cache::put($cacheKey, $data, $cacheDuration);
 
         return $data;
@@ -103,35 +120,121 @@ class OpenWeatherClient
     /**
      * Returns null when OpenWeatherMap cannot be reached in time or answers with an error.
      */
-    private function fetch(string $endpoint, array $query): array|null
+    private function fetch(string $path, array $query): ?array
     {
         try {
             $response = Http::connectTimeout((int) config('weather-widget.connect_timeout', 3))
                 ->timeout((int) config('weather-widget.timeout', 5))
-                ->get("https://api.openweathermap.org/data/2.5/{$endpoint}", $query);
+                ->get("https://api.openweathermap.org/{$path}", $query);
         } catch (ConnectionException) {
             return null;
         }
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             return null;
         }
 
-        return $response->json();
+        $json = $response->json();
+
+        return is_array($json) ? $json : null;
     }
 
-    public function current(string $city, string $units, string $apiKey, int $ttl = 300): ?WeatherCurrentResource
+    public function current(Location|string $location, string $units, string $apiKey, int $ttl = 300): ?WeatherCurrentResource
     {
-        $data = $this->getWeatherData('weather', $city, $apiKey, $units, $ttl);
+        $location = is_string($location) ? Location::city($location) : $location;
+        $data = $this->getWeatherData('weather', $location, $apiKey, $units, $ttl);
+
         return $data ? WeatherCurrentResource::fromApi($data, $units) : null;
     }
 
-    public function forecast(string $city, string $units, string $apiKey, int $ttl = 300): array
+    /**
+     * @return array<int, WeatherForecastResource>
+     */
+    public function forecast(Location|string $location, string $units, string $apiKey, int $ttl = 300): array
     {
-        $data = $this->getWeatherData('forecast', $city, $apiKey, $units, $ttl);
-        $list = $data['list'] ?? [];
-        return collect($list)
-            ->map(fn($item) => WeatherForecastResource::fromApi($item))
+        $location = is_string($location) ? Location::city($location) : $location;
+        $data = $this->getWeatherData('forecast', $location, $apiKey, $units, $ttl);
+
+        return collect($data['list'] ?? [])
+            ->filter(fn (mixed $item): bool => is_array($item))
+            ->map(fn (array $item): WeatherForecastResource => WeatherForecastResource::fromApi($item))
+            ->values()
             ->toArray();
+    }
+
+    /**
+     * @return array<int, Location>
+     */
+    public function searchLocations(string $query, string $apiKey, int $limit = 5): array
+    {
+        $query = trim($query);
+
+        if (mb_strlen($query) < 2 || $apiKey === '') {
+            return [];
+        }
+
+        $lang = $this->resolveLanguage();
+        $results = $this->rememberLookup(
+            'weather-geo-'.md5(mb_strtolower($query).$limit.$lang),
+            fn () => $this->fetch('geo/1.0/direct', ['q' => $query, 'limit' => $limit, 'appid' => $apiKey]),
+        );
+
+        return collect($results)
+            ->map(fn (mixed $place): ?Location => is_array($place) ? $this->locationFromPlace($place, $lang) : null)
+            ->filter()
+            ->unique(fn (Location $location) => mb_strtolower($location->description))
+            ->values()
+            ->all();
+    }
+
+    public function reverseLocation(float $lat, float $lon, string $apiKey): ?Location
+    {
+        if ($apiKey === '') {
+            return null;
+        }
+
+        $lang = $this->resolveLanguage();
+        $places = $this->rememberLookup(
+            'weather-geo-reverse-'.md5(round($lat, 2).','.round($lon, 2).$lang),
+            fn () => $this->fetch('geo/1.0/reverse', ['lat' => round($lat, 2), 'lon' => round($lon, 2), 'limit' => 1, 'appid' => $apiKey]),
+        );
+
+        $place = $places[0] ?? null;
+
+        return is_array($place) ? $this->locationFromPlace(['lat' => $lat, 'lon' => $lon] + $place, $lang) : null;
+    }
+
+    private function rememberLookup(string $key, \Closure $fetch): array
+    {
+        $cached = Cache::get($key);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $result = $fetch();
+
+        if ($result === null) {
+            return [];
+        }
+
+        Cache::put($key, $result, now()->addDay());
+
+        return $result;
+    }
+
+    private function locationFromPlace(array $place, string $lang): ?Location
+    {
+        if (! isset($place['lat'], $place['lon'])) {
+            return null;
+        }
+
+        $name = $place['local_names'][$lang] ?? $place['local_names']['en'] ?? $place['name'] ?? '';
+        $country = $place['country'] ?? null;
+
+        $label = implode(', ', array_filter([$name, $country]));
+        $description = implode(', ', array_filter([$name, $place['state'] ?? null, $country]));
+
+        return Location::coordinates((float) $place['lat'], (float) $place['lon'], $label, $description);
     }
 }

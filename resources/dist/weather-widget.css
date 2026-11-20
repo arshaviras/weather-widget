@@ -69,6 +69,45 @@
 hr { border: none; border-top: 1px solid currentColor; opacity: 0.2; }
 .block { display: block; }
 
+.ww-root { position: relative; container-type: inline-size; }
+
+.ww-layout { display: flex; flex-direction: column; }
+.ww-layout-divider { display: block; margin: 0.75rem 0 1rem; }
+.ww-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+
+@container (min-width: 26rem) {
+  .ww-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container (min-width: 56rem) {
+  .ww-layout { flex-direction: row; align-items: center; column-gap: 4.5rem; }
+  .ww-layout-divider { display: none; }
+  .ww-stats { flex: 1 1 0%; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.ww-forecast-row { display: flex; justify-content: space-between; gap: 0.5rem; overflow-x: auto; scrollbar-width: thin; padding-bottom: 0.25rem; }
+.ww-forecast-item { display: flex; flex: 0 0 auto; flex-direction: column; align-items: center; min-width: 3.5rem; }
+
+.ww-loading { margin: -0.25rem; border-radius: 0.75rem; background: rgb(255 255 255 / 0.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.dark .ww-loading { background: rgb(24 24 27 / 0.6); }
+.ww-loading-spinner { color: var(--primary-500, #f59e0b); }
+
+.ww-location { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.875rem; line-height: 1.25rem; font-weight: 500; }
+.ww-location-icon { width: 1rem; height: 1rem; flex-shrink: 0; }
+
+.ww-settings { position: absolute; top: 0; right: 0; z-index: 1; }
+.ww-main { padding-right: 2.5rem; }
+.ww-temp-min { margin-left: 0.125rem; }
+
+.ww-day-marker { min-height: 1rem; font-size: 0.75rem; line-height: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; }
+
+.ww-pop { display: inline-flex; align-items: center; gap: 0.125rem; margin-top: 0.125rem; font-size: 0.75rem; line-height: 1rem; font-weight: 600; color: oklch(62.3% 0.214 259.815); }
+.dark .ww-pop { color: oklch(70.7% 0.165 254.624); }
+.ww-pop-icon { width: 1rem; height: 1rem; }
+
+.ww-updated { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; margin-top: 1rem; font-size: 0.75rem; line-height: 1rem; }
+
+.ww-forecast-divider { margin-top: 1.25rem; margin-bottom: 1rem; }
+
 /* === Responsive helpers (breakpoints) === */
 @media (min-width: 640px) {
   .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
