@@ -3,7 +3,7 @@
 All notable changes to `weather-widget` will be documented in this file.
 Release notes for every version are on the [GitHub releases page](https://github.com/arshaviras/weather-widget/releases).
 
-## 2.0.0 - Unreleased
+## 2.0.0 - 2026-11-20
 
 ### Added
 - Daily forecast, with an **Hourly / Daily / Both** switch remembered per user
