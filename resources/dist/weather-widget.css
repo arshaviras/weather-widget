@@ -1,73 +1,57 @@
+/*
+ * Filament loads this file on every page of every panel, outside any CSS layer, and the theme's Tailwind utilities
+ * sit in `@layer utilities`, which unlayered rules always beat. So the copies of Tailwind utilities below are scoped
+ * to the widget (`.ww-root`): unscoped, `.flex-col` kept the panel's `sm:flex-row` from working and `.text-gray-500`
+ * its `dark:text-gray-400`, on any page.
+ */
+
 /* === Flexbox & Layout === */
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.flex-row { flex-direction: row; }
-.flex-wrap { flex-wrap: wrap; }
-.flex-1 { flex: 1 1 0%; }
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.justify-between { justify-content: space-between; }
-.gap-1 { gap: 0.25rem; }
-.gap-2 { gap: 0.5rem; }
-.gap-4 { gap: 1rem; }
-.gap-6 { gap: 1.5rem; }
-.gap-x-6 { column-gap: 1.5rem; }
-.gap-y-2 { row-gap: 0.5rem; }
-.gap-x-8 { column-gap: 2rem; }
-.flex-shrink-0 { flex-shrink: 0; }
+.ww-root .flex { display: flex; }
+.ww-root .flex-col { flex-direction: column; }
+.ww-root .flex-shrink-0 { flex-shrink: 0; }
+.ww-root .items-center { align-items: center; }
+.ww-root .justify-center { justify-content: center; }
+.ww-root .gap-2 { gap: 0.5rem; }
+.ww-root .gap-4 { gap: 1rem; }
 
 /* === Width & Height === */
-.w-4 { width: 1rem; }
-.w-8 { width: 2rem; }
-.w-10 { width: 2.5rem; }
-.w-16 { width: 4rem; }
-.w-32 { width: 8rem; }
-.h-4 { height: 1rem; }
-.h-8 { height: 2rem; }
-.h-10 { height: 2.5rem; }
-.h-16 { height: 4rem; }
-.h-32 { height: 8rem; }
-
-/* === Grid === */
-.grid { display: grid; }
-.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.xl\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.ww-root .w-4 { width: 1rem; }
+.ww-root .w-8 { width: 2rem; }
+.ww-root .w-16 { width: 4rem; }
+.ww-root .w-32 { width: 8rem; }
+.ww-root .h-4 { height: 1rem; }
+.ww-root .h-8 { height: 2rem; }
+.ww-root .h-16 { height: 4rem; }
+.ww-root .h-32 { height: 8rem; }
 
 /* === Spacing (Margin / Padding) === */
-.mt-1 { margin-top: 0.25rem; }
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 0.75rem; }
-.mt-5 { margin-top: 1.25rem; }
-.mb-2 { margin-bottom: 0.5rem; }
-.mb-4 { margin-bottom: 1rem; }
-.mb-5 { margin-bottom: 1.25rem; }
+.ww-root .mt-1 { margin-top: 0.25rem; }
+.ww-root .mt-2 { margin-top: 0.5rem; }
+.ww-root .mt-3 { margin-top: 0.75rem; }
+.ww-root .mt-5 { margin-top: 1.25rem; }
+.ww-root .mb-2 { margin-bottom: 0.5rem; }
+.ww-root .mb-4 { margin-bottom: 1rem; }
 
 /* === Typography === */
-.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-.text-base { font-size: 1rem; line-height: 1.5rem; }
-.text-md { font-size: 1.125rem; line-height: 1.5rem; }
-.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-.text-2xl { font-size: 1.5rem; line-height: 2rem; }
-.text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+.ww-root .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.ww-root .text-base { font-size: 1rem; line-height: 1.5rem; }
+.ww-root .text-md { font-size: 1.125rem; line-height: 1.5rem; }
+.ww-root .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.ww-root .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
 
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
+.ww-root .font-medium { font-weight: 500; }
+.ww-root .font-semibold { font-weight: 600; }
+.ww-root .font-bold { font-weight: 700; }
 
 /* === Colors === */
-.text-gray-400 { color: oklch(70.7% 0.022 261.325); }
-.text-gray-500 { color: oklch(55.1% 0.022 261.325); }
-.text-gray-800 { color: oklch(27.8% 0.033 256.848); }
+.ww-root .text-gray-400 { color: oklch(70.7% 0.022 261.325); }
+.ww-root .text-gray-500 { color: oklch(55.1% 0.022 261.325); }
 
 /* Dark mode variants */
-.dark .dark\:text-gray-400 { color: #9ca3af; }
+.dark .ww-root .dark\:text-gray-400 { color: #9ca3af; }
 
 /* === Borders & Divider === */
-hr { border: none; border-top: 1px solid currentColor; opacity: 0.2; }
-.block { display: block; }
+.ww-root hr { border: none; border-top: 1px solid currentColor; opacity: 0.2; }
 
 .ww-root { position: relative; container-type: inline-size; }
 
@@ -107,17 +91,3 @@ hr { border: none; border-top: 1px solid currentColor; opacity: 0.2; }
 .ww-updated { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; margin-top: 1rem; font-size: 0.75rem; line-height: 1rem; }
 
 .ww-forecast-divider { margin-top: 1.25rem; margin-bottom: 1rem; }
-
-/* === Responsive helpers (breakpoints) === */
-@media (min-width: 640px) {
-  .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (min-width: 1024px) {
-  .lg\:flex-row { flex-direction: row; }
-  .lg\:items-center { align-items: center; }
-  .lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .lg\:hidden { display: none; }
-}
-@media (min-width: 1280px) {
-  .xl\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
